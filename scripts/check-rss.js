@@ -4,7 +4,8 @@ import fs from 'fs';
 
 const FEEDS = [
   { name: 'keitah', url: 'https://qiita.com/keitah/feed' },
-  { name: 'UrayahaDays',   url: 'https://feeds.feedburner.com/TheHackersNews' },
+  { name: 'UrayahaDays',   url: 'https://zenn.dev/tenormusica/feed' },
+  { name: 'StepSecurity',   url: 'https://www.stepsecurity.io/blog/rss.xml' },
 ];
 
 const STATE_FILE = 'rss-state.json';
