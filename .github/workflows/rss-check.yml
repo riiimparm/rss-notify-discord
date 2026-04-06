@@ -1,0 +1,36 @@
+name: RSS Feed Checker
+
+on:
+  schedule:
+    - cron: '0 */3 * * *'   # 3時間おき（UTC）
+  workflow_dispatch:          # 手動実行も可能
+
+permissions:
+  contents: write             # state.json をコミットするため
+
+jobs:
+  check-rss:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install fast-xml-parser node-fetch
+
+      - name: Check RSS feeds
+        id: rss
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}   # 通知先（任意）
+        run: node scripts/check-rss.js
+
+      - name: Commit updated state
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add rss-state.json
+          git diff --cached --quiet || git commit -m "chore: update RSS state [skip ci]"
+          git push
