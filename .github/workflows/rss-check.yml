@@ -2,11 +2,11 @@ name: RSS Feed Checker
 
 on:
   schedule:
-    - cron: '0 */3 * * *'   # 3時間おき（UTC）
-  workflow_dispatch:          # 手動実行も可能
+    - cron: '0 */3 * * *'
+  workflow_dispatch:
 
 permissions:
-  contents: write             # state.json をコミットするため
+  contents: read   # writeは不要になる
 
 jobs:
   check-rss:
@@ -18,19 +18,24 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Restore RSS state cache
+        uses: actions/cache@v4
+        with:
+          path: rss-state.json
+          key: rss-state       # 固定キーで常に上書き保存される
+          restore-keys: rss-state
+
       - name: Install dependencies
         run: npm install fast-xml-parser node-fetch
 
       - name: Check RSS feeds
-        id: rss
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}   # 通知先（任意）
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: node scripts/check-rss.js
 
-      - name: Commit updated state
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add rss-state.json
-          git diff --cached --quiet || git commit -m "chore: update RSS state [skip ci]"
-          git push
+      - name: Save RSS state cache
+        uses: actions/cache/save@v4
+        if: always()   # スクリプトが失敗しても状態を保存する
+        with:
+          path: rss-state.json
+          key: rss-state
