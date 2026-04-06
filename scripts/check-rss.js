@@ -72,6 +72,10 @@ async function checkFeed(feed, state) {
 
   for (const item of items) {
     const guid = item.guid?.['#text'] ?? item.guid ?? item.id ?? item.link;
+    const link =
+      typeof item.link === 'object'
+        ? item.link['@_href']           // Atom
+        : item.link ?? item.id;         // RSS
     if (!seen.has(guid)) {
       newItems.push({ guid, title: item.title, link: item.link ?? item.id });
       seen.add(guid);
