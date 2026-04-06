@@ -35,8 +35,6 @@ async function notify(feed, items) {
   for (let i = 0; i < embeds.length; i += 10) {
     const chunk = embeds.slice(i, i + 10);
     const payload = {
-      username: 'RSS Bot',
-      avatar_url: 'https://cdn.simpleicons.org/rss/ff6600',
       embeds: chunk,
     };
 
