@@ -2,7 +2,7 @@ import { XMLParser } from 'fast-xml-parser';
 import fetch from 'node-fetch';
 import fs from 'fs';
 
-const feedsFile = process.env.FEEDS_FILE ?? './feeds-3h.js';
+const feedsFile = process.env.FEEDS_FILE ?? './feeds-daily.js';
 const { FEEDS } = await import(feedsFile);
 
 const STATE_FILE = 'rss-state.json';
