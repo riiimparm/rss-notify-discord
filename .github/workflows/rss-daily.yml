@@ -1,0 +1,38 @@
+name: RSS Feed Checker (daily)
+
+on:
+  schedule:
+    - cron: '0 9 * * *'   # 毎日UTC 9時（JST 18時）
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-rss:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/cache@v4
+        with:
+          path: rss-state.json
+          key: rss-state-daily
+          restore-keys: rss-state-daily
+
+      - run: npm install fast-xml-parser node-fetch
+
+      - name: Check RSS feeds
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          FEEDS_FILE: './scripts/feeds-daily.js'
+        run: node scripts/check-rss.js
+
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: rss-state.json
+          key: rss-state-daily
