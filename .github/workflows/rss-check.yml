@@ -1,4 +1,4 @@
-name: RSS Feed Checker
+name: RSS Feed Checker (3h)
 
 on:
   schedule:
@@ -6,36 +6,33 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read   # writeは不要になる
+  contents: read
 
 jobs:
   check-rss:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Restore RSS state cache
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: rss-state.json
-          key: rss-state       # 固定キーで常に上書き保存される
-          restore-keys: rss-state
+          key: rss-state-3h
+          restore-keys: rss-state-3h
 
-      - name: Install dependencies
-        run: npm install fast-xml-parser node-fetch
+      - run: npm install fast-xml-parser node-fetch
 
       - name: Check RSS feeds
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          FEEDS_FILE: './scripts/feeds-3h.js'
         run: node scripts/check-rss.js
 
-      - name: Save RSS state cache
-        uses: actions/cache/save@v4
-        if: always()   # スクリプトが失敗しても状態を保存する
+      - uses: actions/cache/save@v4
+        if: always()
         with:
           path: rss-state.json
-          key: rss-state
+          key: rss-state-3h
