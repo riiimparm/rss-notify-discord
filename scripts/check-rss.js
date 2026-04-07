@@ -2,11 +2,8 @@ import { XMLParser } from 'fast-xml-parser';
 import fetch from 'node-fetch';
 import fs from 'fs';
 
-const FEEDS = [
-  { name: 'keitah', url: 'https://qiita.com/keitah/feed' },
-  { name: 'UrayahaDays',   url: 'https://zenn.dev/tenormusica/feed' },
-  { name: 'StepSecurity',   url: 'https://www.stepsecurity.io/blog/rss.xml' },
-];
+const feedsFile = process.env.FEEDS_FILE ?? './feeds-3h.js';
+const { FEEDS } = await import(feedsFile);
 
 const STATE_FILE = 'rss-state.json';
 const parser = new XMLParser({ ignoreAttributes: false });
