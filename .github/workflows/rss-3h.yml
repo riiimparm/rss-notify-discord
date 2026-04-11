@@ -17,11 +17,12 @@ jobs:
         with:
           node-version: '20'
 
-      - uses: actions/cache@v4
+      - uses: actions/cache/restore@v4
         with:
           path: rss-state.json
-          key: rss-state-3h
-          restore-keys: rss-state-3h
+          key: rss-state-3h-${{ github.run_id }}
+          restore-keys: |
+            rss-state-3h-
 
       - run: npm install fast-xml-parser node-fetch
 
@@ -35,4 +36,4 @@ jobs:
         if: always()
         with:
           path: rss-state.json
-          key: rss-state-3h
+          key: rss-state-3h-${{ github.run_id }}
