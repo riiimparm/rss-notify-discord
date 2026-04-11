@@ -55,6 +55,17 @@ async function notify(feed, items) {
   }
 }
 
+function getItemDate(item) {
+  const raw =
+    item.pubDate ??       // RSS 2.0
+    item.published ??     // Atom
+    item.updated ??       // Atom
+    item['dc:date'];      // RSS 1.0 / Dublin Core
+  if (!raw) return null;
+  const d = new Date(raw);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 async function checkFeed(feed, state) {
   const res = await fetch(feed.url, { timeout: 10000 });
   const xml = await res.text();
@@ -64,23 +75,40 @@ async function checkFeed(feed, state) {
   const rawItems = channel.item ?? channel.entry ?? [];
   const items = Array.isArray(rawItems) ? rawItems : [rawItems];
 
-  const seen = new Set(state[feed.url] ?? []);
-  const newItems = [];
+  const dated = items
+    .map(item => ({ item, date: getItemDate(item) }))
+    .filter(x => x.date !== null);
 
-  for (const item of items) {
-    const guid = item.guid?.['#text'] ?? item.guid ?? item.id ?? item.link;
-    const link =
-      typeof item.link === 'object'
-        ? item.link['@_href']           // Atom
-        : item.link ?? item.id;         // RSS
-    if (!seen.has(guid)) {
-      newItems.push({ guid, title: item.title, link: item.link ?? item.id });
-      seen.add(guid);
-    }
+  if (dated.length === 0) {
+    console.warn(`[${feed.name}] No dated items found; skipping.`);
+    return { newItems: [], silentInit: false };
   }
 
-  state[feed.url] = [...seen];
-  return newItems;
+  const newestDate = dated.reduce(
+    (max, x) => (x.date > max ? x.date : max),
+    new Date(0),
+  );
+
+  // B-3: Silent init — 前回state無し(初回 or キャッシュ消失 or 旧フォーマット)は
+  // 通知せず現時点の最新日時だけ記録し、次回以降の差分通知に備える。
+  const prevRaw = state[feed.url];
+  const prevDate = typeof prevRaw === 'string' ? new Date(prevRaw) : null;
+  if (prevDate === null || isNaN(prevDate.getTime())) {
+    state[feed.url] = newestDate.toISOString();
+    return { newItems: [], silentInit: true };
+  }
+
+  // B-2: lastSeenAt より新しいアイテムのみを新着として通知。
+  const newItems = dated
+    .filter(x => x.date > prevDate)
+    .sort((a, b) => a.date - b.date) // 古い順に通知
+    .map(({ item }) => ({
+      title: item.title,
+      link: item.link ?? item.id,
+    }));
+
+  state[feed.url] = newestDate.toISOString();
+  return { newItems, silentInit: false };
 }
 
 async function main() {
@@ -88,8 +116,10 @@ async function main() {
 
   for (const feed of FEEDS) {
     try {
-      const newItems = await checkFeed(feed, state);
-      if (newItems.length > 0) {
+      const { newItems, silentInit } = await checkFeed(feed, state);
+      if (silentInit) {
+        console.log(`[${feed.name}] Silent init: recorded current state without notifying.`);
+      } else if (newItems.length > 0) {
         await notify(feed, newItems);
       } else {
         console.log(`[${feed.name}] No new items.`);
