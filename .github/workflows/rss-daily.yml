@@ -28,7 +28,7 @@ jobs:
       - name: Check RSS feeds
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          FEEDS_FILE: './scripts/feeds-daily.js'
+          FEEDS_FILE: 'feeds-daily.js'
         run: node scripts/check-rss.js
 
       - uses: actions/cache/save@v4
