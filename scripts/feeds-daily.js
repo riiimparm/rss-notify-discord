@@ -3,4 +3,5 @@ export const FEEDS = [
   { name: 'UrayahaDays',   url: 'https://zenn.dev/tenormusica/feed' },
   { name: 'OpenID', url: 'https://www.openid.or.jp/blog/atom.xml' },
   { name: 'Threat Intellingence', url: 'https://feeds.feedburner.com/threatintelligence/pvexyqv7v0v' },
+  { name: 'Flatt Security', url: 'https://blog.flatt.tech/rss' },
 ];
